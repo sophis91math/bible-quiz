@@ -634,7 +634,7 @@
                     loadingOverlay.classList.remove('hidden');
 
                     try {
-                        this.quizList = await this.fetchDailyAIQuestions(this.currentLevel, 5);
+                        this.quizList = await this.fetchDailyAIQuestions(this.currentLevel, 10);
                         this.isAIGenerated = true;
                     } catch (e) {
                         console.warn("AI generation offline or key missing. Falling back to built-in Bible database.", e);
