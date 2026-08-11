@@ -75,7 +75,7 @@
                     <span class="mt-4 bg-blue-700 text-white font-extrabold text-lg px-6 py-2 rounded-full shadow-md animate-pulse">
                         <i class="fa-solid fa-play mr-2"></i>터치하여 오늘 퀴즈 시작
                     </span>
-                    <span class="mt-2 text-xs text-blue-900 font-bold bg-sky-200/80 px-3 py-0.5 rounded-full">
+                    <span id="quizTypeBadge" class="mt-2 text-xs text-blue-900 font-bold bg-sky-200/80 px-3 py-0.5 rounded-full">
                         ✨ 매일 새로 생성되는 말씀 퀴즈
                     </span>
                 </div>
@@ -241,21 +241,41 @@
         </div>
     </div>
 
-    <!-- MODAL: SETTINGS -->
+    <!-- MODAL: SETTINGS & API KEY INPUT -->
     <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-3xl w-full max-w-sm p-5 border-4 border-slate-600 shadow-2xl space-y-4">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-5 border-4 border-slate-600 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b-2 border-slate-200 pb-2">
-                <h3 class="text-xl font-extrabold text-slate-800"><i class="fa-solid fa-gear text-slate-600 mr-2"></i>설정 및 학습 관리</h3>
+                <h3 class="text-xl font-extrabold text-slate-800"><i class="fa-solid fa-gear text-slate-600 mr-2"></i>설정 및 AI 연동</h3>
                 <button onclick="quizApp.closeModal('settingsModal')" class="text-slate-400 text-2xl font-bold px-2">&times;</button>
             </div>
 
             <div class="space-y-3">
-                <div class="bg-amber-50 p-3 rounded-xl text-sm font-semibold text-slate-700">
-                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
-                    성경 퀴즈를 매일 꾸준히 풀면 어르신의 기억력 향상과 뇌 건강 유지에 큰 도움이 됩니다.
+                <!-- API Key Registration Section -->
+                <div class="bg-amber-50 p-3.5 rounded-2xl border-2 border-amber-300 space-y-2">
+                    <label class="block text-sm font-extrabold text-amber-900 flex items-center">
+                        <i class="fa-solid fa-key text-amber-600 mr-1.5"></i>
+                        Gemini AI 키 설정 (다운로드 앱용)
+                    </label>
+                    <p class="text-xs text-slate-600 leading-relaxed font-semibold">
+                        핸드폰이나 웹사이트에서 매일 실시간 AI 문제 생성을 이용하려면 구글 Gemini API 키를 입력해 주세요. (미입력 시 내장 성경 퀴즈로 작동)
+                    </p>
+                    <input id="apiKeyInput" type="password" placeholder="AIzaSy... (API 키 붙여넣기)" class="w-full text-xs p-2.5 border-2 border-slate-300 rounded-xl focus:border-amber-600 outline-none bg-white font-mono">
+                    <div class="flex gap-2">
+                        <button onclick="quizApp.saveApiKey()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-xl text-xs">
+                            키 저장하기
+                        </button>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-2 rounded-xl text-xs flex items-center justify-center">
+                            무료 키 발급 <i class="fa-solid fa-up-right-from-square ml-1 text-[10px]"></i>
+                        </a>
+                    </div>
                 </div>
 
-                <button onclick="quizApp.resetData()" class="w-full bg-red-100 border border-red-400 text-red-700 font-bold p-3 rounded-xl hover:bg-red-200 transition-colors">
+                <div class="bg-blue-50 p-3 rounded-xl text-xs font-semibold text-slate-700 border border-blue-200">
+                    <i class="fa-solid fa-circle-info text-blue-600 mr-1"></i>
+                    성경 퀴즈를 매일 꾸준히 풀면 어르신의 기억력 향상과 뇌 건강 유지에 도움이 됩니다.
+                </div>
+
+                <button onclick="quizApp.resetData()" class="w-full bg-red-100 border border-red-400 text-red-700 font-bold p-3 rounded-xl hover:bg-red-200 transition-colors text-sm">
                     <i class="fa-solid fa-trash-can mr-2"></i>학습 데이터 초기화하기
                 </button>
             </div>
@@ -267,8 +287,136 @@
     </div>
 
     <script>
-        // ... existing code ... BIBLE_QUESTIONS ...
-        
+        // BUILT-IN OFFLINE BIBLE QUESTIONS DATABASE
+        const BIBLE_QUESTIONS = {
+            low: [
+                {
+                    id: "off_low_1",
+                    verse: "창세기 1장 3절",
+                    question: "하나님이 태초에 천지를 창조하실 때 가장 첫째 날 만드신 것은 무엇일까요?",
+                    options: ["빛", "해와 달", "사람", "바다"],
+                    answer: 0,
+                    explain: "하나님께서 '빛이 있으라' 하시매 빛이 있었고 첫째 날이 되었습니다."
+                },
+                {
+                    id: "off_low_2",
+                    verse: "창세기 6장 14절",
+                    question: "하나님의 명령을 받아 큰 방주를 만들어 대홍수에서 구원받은 인물은 누구일까요?",
+                    options: ["아브라함", "노아", "모세", "요셉"],
+                    answer: 1,
+                    explain: "노아는 하나님의 말씀에 순종하여 잣나무로 방주를 지었습니다."
+                },
+                {
+                    id: "off_low_3",
+                    verse: "사무엘상 17장 49절",
+                    question: "물맷돌 하나로 거인 장수 골리앗을 무찌른 이스라엘의 소년은 누구일까요?",
+                    options: ["솔로몬", "다윗", "삼손", "요나"],
+                    answer: 1,
+                    explain: "다윗은 만군의 여호와의 이름으로 나아가 물맷돌로 골리앗을 넘어뜨렸습니다."
+                },
+                {
+                    id: "off_low_4",
+                    verse: "마태복음 1장 21절",
+                    question: "우리 죄를 구원하기 위해 베들레헴 마구간에서 태어나신 분은 누구일까요?",
+                    options: ["베드로", "바울", "예수 그리스도", "세례 요한"],
+                    answer: 2,
+                    explain: "아들을 낳으리니 이름을 예수라 하라 이는 그가 자기 백성을 구원할 자이심이라 하셨습니다."
+                },
+                {
+                    id: "off_low_5",
+                    verse: "요나서 1장 17절",
+                    question: "하나님의 명령을 피하려다 큰 물고기 배 속에서 3일 동안 기도한 선지자는 누구일까요?",
+                    options: ["요나", "엘리야", "이사야", "다니엘"],
+                    answer: 0,
+                    explain: "요나는 물고기 배 속에서 하나님께 회개 기도하여 구원받았습니다."
+                }
+            ],
+            medium: [
+                {
+                    id: "off_med_1",
+                    verse: "출애굽기 14장 21절",
+                    question: "지팡이를 들어 홍해 바다를 가르고 이스라엘 백성을 애굽에서 인도해낸 지도자는 누구일까요?",
+                    options: ["여호수아", "모세", "아론", "기드온"],
+                    answer: 1,
+                    explain: "모세가 바다 위로 손을 내밀매 여호와께서 큰 동풍으로 바닷물을 물러가게 하셨습니다."
+                },
+                {
+                    id: "off_med_2",
+                    verse: "다니엘 6장 22절",
+                    question: "왕 외에 다른 신에게 기도하지 말라는 법을 어겨 사자 굴에 던져졌으나 구원받은 선지자는 누구일까요?",
+                    options: ["다니엘", "에스겔", "예레미야", "호세아"],
+                    answer: 0,
+                    explain: "하나님께서 천사를 보내어 사자들의 입을 봉하셨으므로 다니엘이 상하지 않았습니다."
+                },
+                {
+                    id: "off_med_3",
+                    verse: "요한복음 6장 11절",
+                    question: "예수님께서 보리떡 5개와 물고기 2마리로 몇 명을 배불리 먹이셨을까요?",
+                    options: ["100명", "1,000명", "5,000명", "10,000명"],
+                    answer: 2,
+                    explain: "오병이어의 기적으로 남자만 오천 명이 먹고도 열두 바구니가 남았습니다."
+                },
+                {
+                    id: "off_med_4",
+                    verse: "열왕기상 3장 12절",
+                    question: "하나님께 부나 장수를 구하지 않고 백성을 재판할 지혜를 구하여 복을 받은 이스라엘 왕은 누구일까요?",
+                    options: ["사울", "솔로몬", "히스기야", "요시아"],
+                    answer: 1,
+                    explain: "하나님께서 솔로몬에게 지혜롭고 총명한 마음을 주셨습니다."
+                },
+                {
+                    id: "off_med_5",
+                    verse: "누가복음 10장 33절",
+                    question: "강도 만난 자를 불쌍히 여겨 기름과 포도주를 바르고 주막으로 데려가 돌보아 준 사람은 누구일까요?",
+                    options: ["제사장", "레위인", "선한 사마리아인", "바리새인"],
+                    answer: 2,
+                    explain: "예수님은 자비를 베푼 사마리아인이 진정한 이웃이라고 가르치셨습니다."
+                }
+            ],
+            high: [
+                {
+                    id: "off_hi_1",
+                    verse: "갈라디아서 5장 22-23절",
+                    question: "성령의 9가지 열매에 해당하지 않는 것은 무엇일까요?",
+                    options: ["사랑과 희락", "교만과 교채", "화평과 오래참음", "자비와 양선"],
+                    answer: 1,
+                    explain: "성령의 열매는 사랑, 희락, 화평, 오래 참음, 자비, 양선, 충성, 온유, 절제입니다."
+                },
+                {
+                    id: "off_hi_2",
+                    verse: "시편 23편 1절",
+                    question: "'여호와는 나의 목자시니 내게 (   )이 없으리로다' 빈칸에 들어갈 말씀은 무엇일까요?",
+                    options: ["부족함", "슬픔", "걱정", "두려움"],
+                    answer: 0,
+                    explain: "시편 23편 1절: 여호와는 나의 목자시니 내게 부족함이 없으리로다."
+                },
+                {
+                    id: "off_hi_3",
+                    verse: "성경 총론",
+                    question: "구약 성경과 신약 성경은 각각 몇 권으로 이루어져 총 66권일까요?",
+                    options: ["구약 30권, 신약 36권", "구약 39권, 신약 27권", "구약 40권, 신약 26권", "구약 33권, 신약 33권"],
+                    answer: 1,
+                    explain: "성경은 구약 39권, 신약 27권으로 총 66권입니다. (3x9=27로 기억하시면 쉽습니다)"
+                },
+                {
+                    id: "off_hi_4",
+                    verse: "창세기 12장 1-2절",
+                    question: "하나님께서 '너의 고향과 친척과 아버지의 집을 떠나 내가 네게 보여 줄 땅으로 가라'고 부르신 믿음의 조상은 누구일까요?",
+                    options: ["이삭", "야곱", "아브라함", "요셉"],
+                    answer: 2,
+                    explain: "아브라함은 75세에 하나님의 말씀을 따라 순종하여 가나안 땅으로 향했습니다."
+                },
+                {
+                    id: "off_hi_5",
+                    verse: "고린도전서 13장 13절",
+                    question: "'그런즉 믿음, 소망, 사랑, 이 세 가지는 항상 있을 것인데 그 중의 제일은 (   )이라' 빈칸은?",
+                    options: ["믿음", "소망", "사랑", "은혜"],
+                    answer: 2,
+                    explain: "고린도전서 13장 13절: 그 중의 제일은 사랑이라 말씀하셨습니다."
+                }
+            ]
+        };
+
         // --- APP STATE MANAGEMENT & LOCAL STORAGE ---
         class BibleQuizApp {
             constructor() {
@@ -282,6 +430,7 @@
                 this.loadUserData();
                 this.updateHomeStatsUI();
                 this.updateLevelBadge();
+                this.loadApiKeyToInput();
             }
 
             getTodayStr() {
@@ -289,7 +438,6 @@
                 return today.toISOString().split('T')[0];
             }
 
-            // ... existing code loadUserData & saveUserData & updateHomeStatsUI ...
             loadUserData() {
                 const saved = localStorage.getItem('senior_bible_quiz_data');
                 if (saved) {
@@ -314,6 +462,22 @@
 
             saveUserData() {
                 localStorage.setItem('senior_bible_quiz_data', JSON.stringify(this.userData));
+            }
+
+            loadApiKeyToInput() {
+                const savedKey = localStorage.getItem('user_gemini_api_key') || "";
+                const input = document.getElementById('apiKeyInput');
+                if (input) input.value = savedKey;
+            }
+
+            saveApiKey() {
+                const input = document.getElementById('apiKeyInput');
+                if (input) {
+                    const key = input.value.trim();
+                    localStorage.setItem('user_gemini_api_key', key);
+                    alert('API 키가 성공적으로 저장되었습니다! 이제 매일 실시간 AI 성경 퀴즈를 이용하실 수 있습니다.');
+                    this.closeModal('settingsModal');
+                }
             }
 
             updateHomeStatsUI() {
@@ -381,6 +545,10 @@
                     }
                 }
 
+                // Check stored user API Key or default empty key
+                const userSavedKey = localStorage.getItem('user_gemini_api_key') || "";
+                const apiKey = userSavedKey;
+
                 // Call Gemini 3 Flash Preview API for daily Bible quiz generation
                 const systemPrompt = `당신은 어르신(시니어)을 위한 친절하고 따뜻한 성경 퀴즈 전문가입니다.
 어르신들이 매일 쉽고 즐겁게 성경을 묵상하고 뇌 운동을 하실 수 있도록 개역개정 성경 기반 퀴즈 ${count}문제를 생성해 주세요.
@@ -422,7 +590,6 @@
                     }
                 };
 
-                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
                 let attempts = 0;
@@ -470,7 +637,7 @@
                         this.quizList = await this.fetchDailyAIQuestions(this.currentLevel, 5);
                         this.isAIGenerated = true;
                     } catch (e) {
-                        console.warn("AI generation offline/failed, falling back to offline database", e);
+                        console.warn("AI generation offline or key missing. Falling back to built-in Bible database.", e);
                         this.quizList = [...(BIBLE_QUESTIONS[this.currentLevel] || BIBLE_QUESTIONS.low)];
                         this.isAIGenerated = false;
                     } finally {
@@ -497,7 +664,7 @@
                 const q = this.quizList[this.currentIndex];
                 this.selectedOption = null;
 
-                const aiLabel = this.isAIGenerated ? ' (✨오늘의 AI 퀴즈)' : '';
+                const aiLabel = this.isAIGenerated ? ' (✨오늘의 AI 퀴즈)' : ' (📖 말씀 퀴즈)';
                 document.getElementById('quizProgressText').innerText = `문제 ${this.currentIndex + 1} / ${this.quizList.length}${aiLabel}`;
                 document.getElementById('bibleVerseRef').innerText = q.verse;
                 document.getElementById('questionText').innerText = q.question;
@@ -523,7 +690,6 @@
                 this.speakQuestion();
             }
 
-            // ... existing code speakQuestion, selectAnswer, recordResult, nextQuestion, goHome, playAudioEffect, open/close modals ...
             speakQuestion() {
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
@@ -648,6 +814,7 @@
             }
 
             openSettingsModal() {
+                this.loadApiKeyToInput();
                 document.getElementById('settingsModal').classList.remove('hidden');
             }
 
@@ -689,7 +856,6 @@
             resetData() {
                 if (confirm('모든 학습 데이터와 오답 노트를 초기화하시겠습니까?')) {
                     localStorage.removeItem('senior_bible_quiz_data');
-                    // Clear AI quiz cache as well
                     Object.keys(localStorage).forEach(key => {
                         if (key.startsWith('ai_bible_quiz_')) {
                             localStorage.removeItem(key);
