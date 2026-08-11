@@ -531,7 +531,7 @@
                 this.closeModal('levelModal');
             }
 
-            async fetchDailyAIQuestions(level, count = 5) {
+            async fetchDailyAIQuestions(level, count = 10) {
                 const today = this.getTodayStr();
                 const cacheKey = `ai_bible_quiz_${today}_${level}`;
                 
