@@ -1,27 +1,712 @@
-<!-- ... existing code ... -->
-            this.closeModal('levelModal');
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>어르신 성경 퀴즈 - 치매예방 뇌운동</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Noto Sans KR Font for readability -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #f3f4f6;
+        }
+        .wireframe-box {
+            border: 3px solid #334155;
+            box-shadow: 4px 4px 0px #1e293b;
+        }
+        .btn-action {
+            border: 2px solid #1e293b;
+            box-shadow: 2px 3px 0px #1e293b;
+            transition: all 0.1s ease;
+        }
+        .btn-action:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px #1e293b;
+        }
+    </style>
+</head>
+<body class="bg-amber-50 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 text-slate-800">
+
+    <!-- Phone Mockup Container -->
+    <div class="w-full max-w-md bg-white rounded-3xl border-4 border-slate-700 shadow-2xl overflow-hidden flex flex-col min-h-[680px] my-auto">
+        
+        <!-- App Header Bar -->
+        <header class="bg-amber-600 text-white px-4 py-3 flex justify-between items-center shadow-md">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid font-bold text-2xl fa-cross text-amber-200"></i>
+                <h1 class="text-xl font-extrabold tracking-wide">성경 퀴즈 교실</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span id="aiBadge" class="bg-amber-800/80 text-amber-100 text-[11px] px-2 py-0.5 rounded-full font-bold border border-amber-400/50 flex items-center gap-1">
+                    <i class="fa-solid fa-sparkles text-amber-300"></i> 매일 AI
+                </span>
+                <div id="currentLevelBadge" class="bg-amber-900 text-amber-100 px-3 py-1 rounded-full text-xs font-bold border border-amber-400">
+                    난이도: 하
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Screen Content Area -->
+        <main id="mainContainer" class="flex-1 p-4 flex flex-col justify-between relative">
+            
+            <!-- AI Loading Overlay -->
+            <div id="aiLoadingOverlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-md z-40 flex flex-col items-center justify-center p-6 text-center space-y-4 rounded-3xl">
+                <div class="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                <div class="space-y-1">
+                    <h3 class="text-xl font-black text-amber-900"><i class="fa-solid fa-book-open-reader text-amber-600 mr-2"></i>오늘의 성경 퀴즈 생성 중</h3>
+                    <p class="text-sm text-slate-600 font-semibold">매일 새로운 성경 말씀과 문제를 AI가 준비하고 있습니다...</p>
+                </div>
+            </div>
+
+            <!-- SECTION 1: HOME SCREEN -->
+            <section id="homeScreen" class="flex flex-col justify-between h-full space-y-4">
+                
+                <!-- Main Illustration / Start Graphic -->
+                <div class="wireframe-box bg-sky-100 rounded-2xl p-6 flex flex-col items-center justify-center relative min-h-[220px] cursor-pointer" onclick="quizApp.startQuiz()">
+                    <div class="w-0 h-0 border-y-[60px] border-y-transparent border-l-[105px] border-l-blue-600 drop-shadow-lg transform translate-x-2 hover:scale-105 transition-transform"></div>
+                    <span class="mt-4 bg-blue-700 text-white font-extrabold text-lg px-6 py-2 rounded-full shadow-md animate-pulse">
+                        <i class="fa-solid fa-play mr-2"></i>터치하여 오늘 퀴즈 시작
+                    </span>
+                    <span class="mt-2 text-xs text-blue-900 font-bold bg-sky-200/80 px-3 py-0.5 rounded-full">
+                        ✨ 매일 새로 생성되는 말씀 퀴즈
+                    </span>
+                </div>
+
+                <!-- Statistics Grid -->
+                <div class="grid grid-cols-4 gap-2 text-center font-bold">
+                    <div class="wireframe-box bg-amber-100 rounded-xl p-2 flex flex-col justify-between">
+                        <div class="text-[11px] sm:text-xs text-slate-700 leading-tight">총 도전일수</div>
+                        <div id="statDays" class="text-base sm:text-lg text-blue-900 font-extrabold mt-1">1일</div>
+                    </div>
+                    <div class="wireframe-box bg-amber-100 rounded-xl p-2 flex flex-col justify-between">
+                        <div class="text-[11px] sm:text-xs text-slate-700 leading-tight">총 문제풀이</div>
+                        <div id="statSolved" class="text-base sm:text-lg text-blue-900 font-extrabold mt-1">0</div>
+                    </div>
+                    <div class="wireframe-box bg-amber-100 rounded-xl p-2 flex flex-col justify-between">
+                        <div class="text-[11px] sm:text-xs text-slate-700 leading-tight">총 정답 수</div>
+                        <div id="statCorrect" class="text-base sm:text-lg text-blue-900 font-extrabold mt-1">0</div>
+                    </div>
+                    <div class="wireframe-box bg-amber-100 rounded-xl p-2 flex flex-col justify-between">
+                        <div class="text-[11px] sm:text-xs text-slate-700 leading-tight">정답률</div>
+                        <div id="statRate" class="text-base sm:text-lg text-blue-900 font-extrabold mt-1">0%</div>
+                    </div>
+                </div>
+
+                <!-- Bottom 4 Action Buttons -->
+                <div class="grid grid-cols-4 gap-2 pt-2">
+                    <button onclick="quizApp.startQuiz()" class="btn-action bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-lg py-4 rounded-xl flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-play text-xl mb-1"></i>
+                        <span>시작</span>
+                    </button>
+                    <button onclick="quizApp.openRecordModal()" class="btn-action bg-blue-500 hover:bg-blue-600 text-white font-extrabold text-lg py-4 rounded-xl flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-calendar-check text-xl mb-1"></i>
+                        <span>기록</span>
+                    </button>
+                    <button onclick="quizApp.openLevelModal()" class="btn-action bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-lg py-4 rounded-xl flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-layer-group text-xl mb-1"></i>
+                        <span>레벨</span>
+                    </button>
+                    <button onclick="quizApp.openSettingsModal()" class="btn-action bg-slate-500 hover:bg-slate-600 text-white font-extrabold text-lg py-4 rounded-xl flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-gear text-xl mb-1"></i>
+                        <span>설정</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- SECTION 2: QUIZ SOLVE SCREEN -->
+            <section id="quizScreen" class="hidden flex-col justify-between h-full space-y-3">
+                <!-- Progress & Voice Reading Bar -->
+                <div class="flex justify-between items-center bg-amber-100 p-2 px-3 rounded-xl border-2 border-amber-300">
+                    <span id="quizProgressText" class="text-base font-extrabold text-amber-900">문제 1 / 5</span>
+                    <button onclick="quizApp.speakQuestion()" class="bg-amber-600 text-white px-3 py-1 rounded-lg text-sm font-bold flex items-center space-x-1 active:scale-95">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>읽기</span>
+                    </button>
+                </div>
+
+                <!-- Bible Question Box -->
+                <div class="wireframe-box bg-white rounded-2xl p-4 flex-1 flex flex-col justify-center items-center text-center">
+                    <span id="bibleVerseRef" class="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full mb-2">창세기 1장</span>
+                    <h2 id="questionText" class="text-xl sm:text-2xl font-extrabold text-slate-800 leading-relaxed">
+                        하나님이 태초에 천지를 창조하실 때 가장 첫째 날 만드신 것은 무엇일까요?
+                    </h2>
+                </div>
+
+                <!-- Multiple Choice Options -->
+                <div id="optionsContainer" class="space-y-2.5">
+                    <!-- Dynamic option buttons injected via JS -->
+                </div>
+
+                <!-- Answer Feedback Banner -->
+                <div id="feedbackBox" class="hidden wireframe-box rounded-xl p-3 text-center text-lg font-extrabold"></div>
+
+                <!-- Footer Navigation inside Quiz -->
+                <div class="flex justify-between pt-1">
+                    <button onclick="quizApp.goHome()" class="bg-slate-300 text-slate-800 font-bold px-4 py-2 rounded-xl text-base">
+                        <i class="fa-solid fa-house mr-1"></i>처음으로
+                    </button>
+                    <button id="nextBtn" onclick="quizApp.nextQuestion()" class="hidden bg-emerald-600 text-white font-extrabold px-6 py-2 rounded-xl text-lg shadow-md">
+                        다음 문제 <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: LEVEL SELECTION -->
+    <div id="levelModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-5 border-4 border-amber-600 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b-2 border-slate-200 pb-2">
+                <h3 class="text-xl font-extrabold text-slate-800"><i class="fa-solid fa-layer-group text-amber-600 mr-2"></i>난이도 선택</h3>
+                <button onclick="quizApp.closeModal('levelModal')" class="text-slate-400 text-2xl font-bold px-2">&times;</button>
+            </div>
+            
+            <p class="text-xs text-slate-600 font-bold text-center">어르신 눈높이에 맞는 난이도를 골라주세요.</p>
+
+            <div class="space-y-3">
+                <button onclick="quizApp.setLevel('low')" id="lvlBtn-low" class="w-full btn-action bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border-2 border-emerald-500 rounded-2xl p-3 flex items-center justify-between font-extrabold text-lg">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-emerald-500 text-white rounded-xl w-10 h-10 flex items-center justify-center text-lg">하</span>
+                        <div class="text-left">
+                            <div>쉬움 (기본값)</div>
+                            <div class="text-xs text-emerald-700 font-medium">성경의 기초 이야기와 핵심 주제</div>
+                        </div>
+                    </div>
+                    <i id="check-low" class="fa-solid fa-circle-check text-2xl text-emerald-600"></i>
+                </button>
+
+                <button onclick="quizApp.setLevel('medium')" id="lvlBtn-medium" class="w-full btn-action bg-amber-100 hover:bg-amber-200 text-amber-900 border-2 border-amber-500 rounded-2xl p-3 flex items-center justify-between font-extrabold text-lg">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-amber-500 text-white rounded-xl w-10 h-10 flex items-center justify-center text-lg">중</span>
+                        <div class="text-left">
+                            <div>보통</div>
+                            <div class="text-xs text-amber-700 font-medium">구약과 신약의 인물과 사건들</div>
+                        </div>
+                    </div>
+                    <i id="check-medium" class="fa-solid fa-circle-check text-2xl text-amber-600 hidden"></i>
+                </button>
+
+                <button onclick="quizApp.setLevel('high')" id="lvlBtn-high" class="w-full btn-action bg-red-100 hover:bg-red-200 text-red-900 border-2 border-red-500 rounded-2xl p-3 flex items-center justify-between font-extrabold text-lg">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-red-500 text-white rounded-xl w-10 h-10 flex items-center justify-center text-lg">상</span>
+                        <div class="text-left">
+                            <div>어려움</div>
+                            <div class="text-xs text-red-700 font-medium">구체적인 장절 내용 및 심화 퀴즈</div>
+                        </div>
+                    </div>
+                    <i id="check-high" class="fa-solid fa-circle-check text-2xl text-red-600 hidden"></i>
+                </button>
+
+                <button onclick="quizApp.setLevel('wrong')" id="lvlBtn-wrong" class="w-full btn-action bg-purple-100 hover:bg-purple-200 text-purple-900 border-2 border-purple-500 rounded-2xl p-3 flex items-center justify-between font-extrabold text-lg">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-purple-600 text-white rounded-xl w-10 h-10 flex items-center justify-center text-lg">오답</span>
+                        <div class="text-left">
+                            <div>오답 노트 풀기</div>
+                            <div class="text-xs text-purple-700 font-medium" id="wrongCountBadge">과거 틀린 문제만 모아 풀어보기</div>
+                        </div>
+                    </div>
+                    <i id="check-wrong" class="fa-solid fa-circle-check text-2xl text-purple-600 hidden"></i>
+                </button>
+            </div>
+
+            <button onclick="quizApp.closeModal('levelModal')" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-base mt-2">
+                선택 완료
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: DAILY RECORD HISTORY -->
+    <div id="recordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-5 border-4 border-blue-600 shadow-2xl space-y-3">
+            <div class="flex justify-between items-center border-b-2 border-slate-200 pb-2">
+                <h3 class="text-xl font-extrabold text-slate-800"><i class="fa-solid fa-calendar-days text-blue-600 mr-2"></i>일자별 학습 기록</h3>
+                <button onclick="quizApp.closeModal('recordModal')" class="text-slate-400 text-2xl font-bold px-2">&times;</button>
+            </div>
+
+            <div id="recordsList" class="max-h-64 overflow-y-auto space-y-2 pr-1">
+                <!-- Log entries injected dynamically -->
+            </div>
+
+            <button onclick="quizApp.closeModal('recordModal')" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-base mt-2">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL: SETTINGS -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl w-full max-w-sm p-5 border-4 border-slate-600 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b-2 border-slate-200 pb-2">
+                <h3 class="text-xl font-extrabold text-slate-800"><i class="fa-solid fa-gear text-slate-600 mr-2"></i>설정 및 학습 관리</h3>
+                <button onclick="quizApp.closeModal('settingsModal')" class="text-slate-400 text-2xl font-bold px-2">&times;</button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-amber-50 p-3 rounded-xl text-sm font-semibold text-slate-700">
+                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                    성경 퀴즈를 매일 꾸준히 풀면 어르신의 기억력 향상과 뇌 건강 유지에 큰 도움이 됩니다.
+                </div>
+
+                <button onclick="quizApp.resetData()" class="w-full bg-red-100 border border-red-400 text-red-700 font-bold p-3 rounded-xl hover:bg-red-200 transition-colors">
+                    <i class="fa-solid fa-trash-can mr-2"></i>학습 데이터 초기화하기
+                </button>
+            </div>
+
+            <button onclick="quizApp.closeModal('settingsModal')" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-base">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ... existing code ... BIBLE_QUESTIONS ...
+        
+        // --- APP STATE MANAGEMENT & LOCAL STORAGE ---
+        class BibleQuizApp {
+            constructor() {
+                this.currentLevel = 'low';
+                this.quizList = [];
+                this.currentIndex = 0;
+                this.sessionCorrect = 0;
+                this.selectedOption = null;
+                this.isAIGenerated = false;
+
+                this.loadUserData();
+                this.updateHomeStatsUI();
+                this.updateLevelBadge();
+            }
+
+            getTodayStr() {
+                const today = new Date();
+                return today.toISOString().split('T')[0];
+            }
+
+            // ... existing code loadUserData & saveUserData & updateHomeStatsUI ...
+            loadUserData() {
+                const saved = localStorage.getItem('senior_bible_quiz_data');
+                if (saved) {
+                    this.userData = JSON.parse(saved);
+                } else {
+                    this.userData = {
+                        solvedDates: [this.getTodayStr()],
+                        totalSolved: 0,
+                        totalCorrect: 0,
+                        wrongQuestions: [],
+                        dailyLogs: {}
+                    };
+                    this.saveUserData();
+                }
+
+                const today = this.getTodayStr();
+                if (!this.userData.solvedDates.includes(today)) {
+                    this.userData.solvedDates.push(today);
+                    this.saveUserData();
+                }
+            }
+
+            saveUserData() {
+                localStorage.setItem('senior_bible_quiz_data', JSON.stringify(this.userData));
+            }
+
+            updateHomeStatsUI() {
+                const totalDays = this.userData.solvedDates.length;
+                const totalSolved = this.userData.totalSolved;
+                const totalCorrect = this.userData.totalCorrect;
+                const rate = totalSolved > 0 ? Math.round((totalCorrect / totalSolved) * 100) : 0;
+
+                document.getElementById('statDays').innerText = `${totalDays}일`;
+                document.getElementById('statSolved').innerText = `${totalSolved}`;
+                document.getElementById('statCorrect').innerText = `${totalCorrect}`;
+                document.getElementById('statRate').innerText = `${rate}%`;
+
+                const wrongCount = this.userData.wrongQuestions.length;
+                const wrongBadge = document.getElementById('wrongCountBadge');
+                if (wrongBadge) {
+                    wrongBadge.innerText = wrongCount > 0 ? `틀린 문제 ${wrongCount}개 보유` : '과거 틀린 문제만 모아 풀어보기';
+                }
+            }
+
+            updateLevelBadge() {
+                const levelNames = {
+                    low: '난이도: 하 (쉬움)',
+                    medium: '난이도: 중 (보통)',
+                    high: '난이도: 상 (어려움)',
+                    wrong: '난이도: 오답 노트'
+                };
+                document.getElementById('currentLevelBadge').innerText = levelNames[this.currentLevel];
+            }
+
+            setLevel(level) {
+                if (level === 'wrong' && this.userData.wrongQuestions.length === 0) {
+                    alert('저장된 오답이 없습니다! 먼저 문제를 풀어보세요.');
+                    return;
+                }
+
+                this.currentLevel = level;
+                this.updateLevelBadge();
+
+                ['low', 'medium', 'high', 'wrong'].forEach(l => {
+                    const checkIcon = document.getElementById(`check-${l}`);
+                    if (checkIcon) {
+                        if (l === level) {
+                            checkIcon.classList.remove('hidden');
+                        } else {
+                            checkIcon.classList.add('hidden');
+                        }
+                    }
+                });
+
+                this.closeModal('levelModal');
+            }
+
+            async fetchDailyAIQuestions(level, count = 5) {
+                const today = this.getTodayStr();
+                const cacheKey = `ai_bible_quiz_${today}_${level}`;
+                
+                // Check if today's quiz is cached in localStorage
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    try {
+                        return JSON.parse(cached);
+                    } catch (e) {
+                        console.error('Cache parse error', e);
+                    }
+                }
+
+                // Call Gemini 3 Flash Preview API for daily Bible quiz generation
+                const systemPrompt = `당신은 어르신(시니어)을 위한 친절하고 따뜻한 성경 퀴즈 전문가입니다.
+어르신들이 매일 쉽고 즐겁게 성경을 묵상하고 뇌 운동을 하실 수 있도록 개역개정 성경 기반 퀴즈 ${count}문제를 생성해 주세요.
+
+규칙:
+1. 문장은 크고 명확하며 어르신 눈높이에 맞는 존댓말을 사용해 주세요.
+2. 각 문제는 4개의 객관식 선택지(options)를 포함하며, 정답 인덱스(answer)는 0~3 중 하나입니다.
+3. 구절 출처(verse)와 정답 해설(explain)을 포함해야 합니다.
+4. 난이도 [${level}]:
+   - low: 아브라함, 노아, 다윗과 골리앗, 예수님 탄생 등 성경의 유명한 기초 이야기
+   - medium: 구약/신약의 주요 인물, 비유(탕자, 선한 사마리아인 등) 및 기적 이야기
+   - high: 대표 구절(시편 23편 등), 성령의 열매, 성경 권수 등 묵상 심화 문제`;
+
+                const userPrompt = `오늘 날짜(${today})에 맞는 은혜로운 성경 대목에서 난이도 [${level}] 퀴즈 ${count}문제를 생성해 주세요.`;
+
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    id: { type: "STRING" },
+                                    verse: { type: "STRING" },
+                                    question: { type: "STRING" },
+                                    options: {
+                                        type: "ARRAY",
+                                        items: { type: "STRING" }
+                                    },
+                                    answer: { type: "INTEGER" },
+                                    explain: { type: "STRING" }
+                                },
+                                required: ["id", "verse", "question", "options", "answer", "explain"]
+                            }
+                        }
+                    }
+                };
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                let attempts = 0;
+                let delay = 1000;
+                
+                while (attempts < 2) {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error(`API status ${response.status}`);
+                        
+                        const result = await response.json();
+                        const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!jsonText) throw new Error("Empty response from AI model");
+
+                        const questions = JSON.parse(jsonText);
+                        if (Array.isArray(questions) && questions.length > 0) {
+                            localStorage.setItem(cacheKey, JSON.stringify(questions));
+                            return questions;
+                        }
+                    } catch (err) {
+                        attempts++;
+                        if (attempts >= 2) throw err;
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2;
+                    }
+                }
+                throw new Error("Failed after retries");
+            }
+
+            async startQuiz() {
+                if (this.currentLevel === 'wrong') {
+                    this.quizList = [...this.userData.wrongQuestions];
+                    this.isAIGenerated = false;
+                } else {
+                    // Show loading overlay during API fetch
+                    const loadingOverlay = document.getElementById('aiLoadingOverlay');
+                    loadingOverlay.classList.remove('hidden');
+
+                    try {
+                        this.quizList = await this.fetchDailyAIQuestions(this.currentLevel, 5);
+                        this.isAIGenerated = true;
+                    } catch (e) {
+                        console.warn("AI generation offline/failed, falling back to offline database", e);
+                        this.quizList = [...(BIBLE_QUESTIONS[this.currentLevel] || BIBLE_QUESTIONS.low)];
+                        this.isAIGenerated = false;
+                    } finally {
+                        loadingOverlay.classList.add('hidden');
+                    }
+                }
+
+                if (this.quizList.length === 0) {
+                    alert('풀 수 있는 문제가 없습니다.');
+                    return;
+                }
+
+                this.currentIndex = 0;
+                this.sessionCorrect = 0;
+
+                document.getElementById('homeScreen').classList.add('hidden');
+                document.getElementById('quizScreen').classList.remove('hidden');
+                document.getElementById('quizScreen').classList.add('flex');
+
+                this.renderCurrentQuestion();
+            }
+
+            renderCurrentQuestion() {
+                const q = this.quizList[this.currentIndex];
+                this.selectedOption = null;
+
+                const aiLabel = this.isAIGenerated ? ' (✨오늘의 AI 퀴즈)' : '';
+                document.getElementById('quizProgressText').innerText = `문제 ${this.currentIndex + 1} / ${this.quizList.length}${aiLabel}`;
+                document.getElementById('bibleVerseRef').innerText = q.verse;
+                document.getElementById('questionText').innerText = q.question;
+
+                const feedbackBox = document.getElementById('feedbackBox');
+                feedbackBox.classList.add('hidden');
+                document.getElementById('nextBtn').classList.add('hidden');
+
+                const optionsContainer = document.getElementById('optionsContainer');
+                optionsContainer.innerHTML = '';
+
+                q.options.forEach((optText, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full btn-action bg-white border-2 border-slate-300 hover:bg-amber-50 text-slate-800 font-extrabold text-lg py-3.5 px-4 rounded-2xl text-left flex items-center space-x-3 transition-colors';
+                    btn.onclick = () => this.selectAnswer(index);
+                    btn.innerHTML = `
+                        <span class="w-8 h-8 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-sm font-black flex-shrink-0">${index + 1}</span>
+                        <span>${optText}</span>
+                    `;
+                    optionsContainer.appendChild(btn);
+                });
+
+                this.speakQuestion();
+            }
+
+            // ... existing code speakQuestion, selectAnswer, recordResult, nextQuestion, goHome, playAudioEffect, open/close modals ...
+            speakQuestion() {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const q = this.quizList[this.currentIndex];
+                    const utterance = new SpeechSynthesisUtterance(q.question);
+                    utterance.lang = 'ko-KR';
+                    utterance.rate = 0.85;
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+
+            selectAnswer(index) {
+                if (this.selectedOption !== null) return;
+                this.selectedOption = index;
+
+                const q = this.quizList[this.currentIndex];
+                const isCorrect = (index === q.answer);
+                const optionsContainer = document.getElementById('optionsContainer');
+                const optionBtns = optionsContainer.children;
+
+                if (isCorrect) {
+                    optionBtns[index].className = 'w-full btn-action bg-emerald-500 text-white font-extrabold text-lg py-3.5 px-4 rounded-2xl text-left flex items-center space-x-3';
+                    this.playAudioEffect(true);
+                    this.sessionCorrect++;
+                    this.recordResult(true, q);
+                } else {
+                    optionBtns[index].className = 'w-full btn-action bg-red-500 text-white font-extrabold text-lg py-3.5 px-4 rounded-2xl text-left flex items-center space-x-3';
+                    optionBtns[q.answer].className = 'w-full btn-action bg-emerald-100 border-2 border-emerald-500 text-emerald-900 font-extrabold text-lg py-3.5 px-4 rounded-2xl text-left flex items-center space-x-3';
+                    this.playAudioEffect(false);
+                    this.recordResult(false, q);
+                }
+
+                const feedbackBox = document.getElementById('feedbackBox');
+                feedbackBox.classList.remove('hidden');
+                if (isCorrect) {
+                    feedbackBox.className = 'wireframe-box bg-emerald-100 text-emerald-900 rounded-xl p-3 text-center text-base font-extrabold';
+                    feedbackBox.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-2xl mr-1"></i> 정답입니다!<br><span class="text-xs text-emerald-800 font-semibold">${q.explain}</span>`;
+                } else {
+                    feedbackBox.className = 'wireframe-box bg-red-100 text-red-900 rounded-xl p-3 text-center text-base font-extrabold';
+                    feedbackBox.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-600 text-2xl mr-1"></i> 아쉽네요! 정답은 ${q.answer + 1}번입니다.<br><span class="text-xs text-red-800 font-semibold">${q.explain}</span>`;
+                }
+
+                document.getElementById('nextBtn').classList.remove('hidden');
+            }
+
+            recordResult(isCorrect, question) {
+                this.userData.totalSolved += 1;
+                if (isCorrect) {
+                    this.userData.totalCorrect += 1;
+                    this.userData.wrongQuestions = this.userData.wrongQuestions.filter(item => item.id !== question.id);
+                } else {
+                    if (!this.userData.wrongQuestions.some(item => item.id === question.id)) {
+                        this.userData.wrongQuestions.push(question);
+                    }
+                }
+
+                const today = this.getTodayStr();
+                if (!this.userData.dailyLogs[today]) {
+                    this.userData.dailyLogs[today] = { solved: 0, correct: 0 };
+                }
+                this.userData.dailyLogs[today].solved += 1;
+                if (isCorrect) this.userData.dailyLogs[today].correct += 1;
+
+                this.saveUserData();
+                this.updateHomeStatsUI();
+            }
+
+            nextQuestion() {
+                this.currentIndex++;
+                if (this.currentIndex < this.quizList.length) {
+                    this.renderCurrentQuestion();
+                } else {
+                    alert(`🎉 축하합니다! 준비된 모든 문제를 푸셨습니다.\n맞춘 개수: ${this.sessionCorrect} / ${this.quizList.length}`);
+                    this.goHome();
+                }
+            }
+
+            goHome() {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                document.getElementById('quizScreen').classList.add('hidden');
+                document.getElementById('quizScreen').classList.remove('flex');
+                document.getElementById('homeScreen').classList.remove('hidden');
+                this.updateHomeStatsUI();
+            }
+
+            playAudioEffect(isSuccess) {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    if (isSuccess) {
+                        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+                        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.4);
+                    } else {
+                        osc.frequency.setValueAtTime(220, ctx.currentTime);
+                        osc.frequency.setValueAtTime(196, ctx.currentTime + 0.15);
+                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.3);
+                    }
+                } catch(e) {
+                    console.log('Audio not supported', e);
+                }
+            }
+
+            openLevelModal() {
+                document.getElementById('levelModal').classList.remove('hidden');
+            }
+
+            openRecordModal() {
+                this.renderRecordList();
+                document.getElementById('recordModal').classList.remove('hidden');
+            }
+
+            openSettingsModal() {
+                document.getElementById('settingsModal').classList.remove('hidden');
+            }
+
+            closeModal(modalId) {
+                document.getElementById(modalId).classList.add('hidden');
+            }
+
+            renderRecordList() {
+                const listContainer = document.getElementById('recordsList');
+                listContainer.innerHTML = '';
+
+                const logs = this.userData.dailyLogs;
+                const dates = Object.keys(logs).sort().reverse();
+
+                if (dates.length === 0) {
+                    listContainer.innerHTML = `<div class="text-center text-slate-500 py-4 font-bold">아직 풀이 기록이 없습니다.</div>`;
+                    return;
+                }
+
+                dates.forEach(dateStr => {
+                    const entry = logs[dateStr];
+                    const rate = entry.solved > 0 ? Math.round((entry.correct / entry.solved) * 100) : 0;
+                    
+                    const row = document.createElement('div');
+                    row.className = 'bg-amber-50 border-2 border-amber-200 rounded-2xl p-3 flex justify-between items-center';
+                    row.innerHTML = `
+                        <div>
+                            <div class="font-extrabold text-slate-800 text-sm"><i class="fa-regular fa-calendar mr-1 text-amber-700"></i>${dateStr}</div>
+                            <div class="text-xs text-slate-600 font-bold mt-0.5">풀이: ${entry.solved}문제 / 정답: ${entry.correct}개</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="bg-blue-600 text-white font-black text-sm px-3 py-1 rounded-full">정답률 ${rate}%</span>
+                        </div>
+                    `;
+                    listContainer.appendChild(row);
+                });
+            }
+
+            resetData() {
+                if (confirm('모든 학습 데이터와 오답 노트를 초기화하시겠습니까?')) {
+                    localStorage.removeItem('senior_bible_quiz_data');
+                    // Clear AI quiz cache as well
+                    Object.keys(localStorage).forEach(key => {
+                        if (key.startsWith('ai_bible_quiz_')) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                    this.loadUserData();
+                    this.updateHomeStatsUI();
+                    this.closeModal('settingsModal');
+                    alert('데이터가 초기화되었습니다.');
+                }
+            }
         }
 
-        async fetchDailyAIQuestions(level, count = 10) {
-            const today = this.getTodayStr();
-            const cacheKey = `ai_bible_quiz_${today}_${level}`;
-            
-            // Check if today's quiz is cached in localStorage
-            const cached = localStorage.getItem(cacheKey);
-<!-- ... existing code ... -->
-                try {
-                    this.quizList = await this.fetchDailyAIQuestions(this.currentLevel, 10);
-                    this.isAIGenerated = true;
-                } catch (e) {
-                    console.warn("AI generation offline/failed, falling back to offline database", e);
-<!-- ... existing code ... -->
-```
-
-eofeof
-
-### ✏️ 적용 방법
-1. 깃허브(GitHub)의 `bible-quiz` 저장소로 접속합니다.
-2. `index.html` 파일을 열어 연필 모양 버튼(**Edit file**)을 누릅니다.
-3. 코드에서 `fetchDailyAIQuestions(level, count = 5)` 부분의 `5`를 **`10`**으로 수정하시거나, 변경된 전체 코드를 복사해서 붙여넣으신 후 **[Commit changes]** 버튼을 눌러 저장해 주세요!
-
-이제 어르신들께서 매일 10문제씩 은혜로운 성경 퀴즈를 푸시며 뇌 운동을 하실 수 있습니다. 궁금하신 점이 있거나 더 추가하고 싶은 기능이 있으면 말씀해 주세요!
+        let quizApp;
+        window.onload = function() {
+            quizApp = new BibleQuizApp();
+        };
+    </script>
+</body>
+</html>
